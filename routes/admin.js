@@ -29,10 +29,13 @@ var upload = multer({
 });
 
 
+
+
 const planController = require('../Controller/planController');
 const enrollmetnController = require('../Controller/enrollmentController')
 const userController = require('../Controller/userController')
 const adminController = require('../Controller/adminController')
+const planOrderController = require('../Controller/planOrderController')
 
 
 // admin -----------------------------
@@ -63,5 +66,10 @@ router.get('/getusers',verifyToken,userController.getUser)
 router.get('/getuserbyid/:id',userController.getUserById)
 router.delete('/deleteuser/:id',userController.deleteUser)
 router.put('/edituser/:id',upload.single('image'),userController.editUser)
+
+// plan orders ----------------
+
+router.post('/createplanorder',verifyToken,planOrderController.postPlandOrder)
+router.get('/getplanhistorybyuser/:id',planOrderController.getPlanOrderByUser)
 
 module.exports = router;
