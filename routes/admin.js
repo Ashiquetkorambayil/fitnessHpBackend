@@ -71,5 +71,8 @@ router.put('/edituser/:id',upload.single('image'),userController.editUser)
 
 router.post('/createplanorder',verifyToken,planOrderController.postPlandOrder)
 router.get('/getplanhistorybyuser/:id',planOrderController.getPlanOrderByUser)
+router.get('/getlastplanorder/:id',verifyToken,planOrderController.getLastPlanOrderOfUser)
+router.get('/getfeedetailbyuser/:id',verifyToken,planOrderController.getPlanDetailsById)
+// getlastplanorder
 
 module.exports = router;
