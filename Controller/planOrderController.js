@@ -4,6 +4,7 @@ const moment = require('moment'); // Import moment library for date manipulation
 
 exports.postPlandOrder = asyncHandler(async(req,res)=>{
     const { userId, planId, name, amount, duration } = req.body;
+    console.log(req.body), 'the rusult'
     try{
         // Calculate expiry date by adding duration months to the current date
         const expiryDate = moment().add(duration, 'months').toDate();
@@ -91,6 +92,57 @@ exports.getLastPlanOrderOfUser = asyncHandler(async (req, res) => {
 });
 
 
+exports.getLastPlanOrderOfAllUsers = asyncHandler(async (req, res) => {
+    try {
+        // Retrieve the last plan order for all users
+        const allUsersLastPlanOrders = await plandOrderModel.aggregate([
+            {
+                $group: {
+                    _id: "$userId",
+                    lastPlanOrder: { $last: "$$ROOT" } // Get the last plan order for each user
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    userId: "$_id",
+                    lastPlanOrder: 1
+                }
+            }
+        ]);
+
+        if (!allUsersLastPlanOrders || allUsersLastPlanOrders.length === 0) {
+            // If no plan orders found for any user, send an empty response
+            res.json([]);
+            return;
+        }
+
+        // Iterate over each user's last plan order to calculate activeStatus
+        const currentDate = moment();
+        allUsersLastPlanOrders.forEach(userOrder => {
+            const lastPlanOrder = userOrder.lastPlanOrder;
+            const daysUntilExpiry = moment(lastPlanOrder.expiryDate).diff(currentDate, 'days');
+            if (daysUntilExpiry <= 0) {
+                lastPlanOrder.activeStatus = "Expired";
+            } else if (daysUntilExpiry <= 5) {
+                lastPlanOrder.activeStatus = "Nearly Expire";
+            } else {
+                lastPlanOrder.activeStatus = "Active";
+            }
+        });
+
+        console.log(allUsersLastPlanOrders, "last plan orders of all users");
+
+        // Send the last plan orders with updated activeStatus to the frontend
+        res.json(allUsersLastPlanOrders);
+    } catch (error) {
+        console.error('Error fetching last plan orders of all users:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+
+
 exports.getPlanDetailsById = asyncHandler(async(req,res)=>{
     const {id} = req.params
     console.log(req.params,'haihfoiashdfoiasiodfhioasdhpfio')
@@ -100,6 +152,17 @@ exports.getPlanDetailsById = asyncHandler(async(req,res)=>{
     }catch(err){
         console.log(err)
         res.status(500).message('an error occured while fetching data')
+    }
+})
+
+exports.deletePlanOrder = asyncHandler(async(req,res)=>{
+    const {id} = req.params
+    try{
+     await plandOrderModel.findByIdAndDelete(id)
+     res.status(200).send('the item deleted successfully')
+    }catch(err){
+        console.log(err)
+        res.status(500).send('an error occured while deleting item')
     }
 })
 
