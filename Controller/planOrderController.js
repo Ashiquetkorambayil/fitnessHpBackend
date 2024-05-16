@@ -3,14 +3,14 @@ const plandOrderModel = require('../Model/plandOrderModel');
 const moment = require('moment'); // Import moment library for date manipulation
 
 exports.postPlandOrder = asyncHandler(async(req,res)=>{
-    const { userId, planId, name, amount, duration } = req.body;
+    const { userId, planId, name, amount, duration, userName, modeOfPayment } = req.body;
     console.log(req.body), 'the rusult'
     try{
         // Calculate expiry date by adding duration months to the current date
         const expiryDate = moment().add(duration, 'months').toDate();
         
         // Create plan order with expiry date
-        await plandOrderModel.create({ userId, planId, name, amount, duration, expiryDate });
+        await plandOrderModel.create({ userId, planId, name, amount, duration, expiryDate ,modeOfPayment, userName});
         
         res.json({ message: 'User plan selected successfully' });
     } catch(err){

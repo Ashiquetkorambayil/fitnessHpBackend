@@ -36,6 +36,7 @@ const enrollmetnController = require('../Controller/enrollmentController')
 const userController = require('../Controller/userController')
 const adminController = require('../Controller/adminController')
 const planOrderController = require('../Controller/planOrderController')
+const pendingOrdersController = require('../Controller/pendingOrderController')
 
 
 // admin -----------------------------
@@ -75,6 +76,10 @@ router.get('/getlastplanorder/:id',verifyToken,planOrderController.getLastPlanOr
 router.get('/getfeedetailbyuser/:id',verifyToken,planOrderController.getPlanDetailsById)
 router.get('/getlastplansofallusers',planOrderController.getLastPlanOrderOfAllUsers)
 router.delete('/deleteplanorder/:id',verifyToken,planOrderController.deletePlanOrder)
-// getlastplanorder
+
+// pending orders ----------------
+
+router.post('/creatependingorder',verifyToken,pendingOrdersController.postPendingOrder)
+router.get('/getpendingorder',verifyToken,pendingOrdersController.getPendingOrder)
 
 module.exports = router;

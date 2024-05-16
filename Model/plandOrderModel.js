@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 const planOrderModel = new mongoose.Schema({
     userId: { type: String },
+    userName: { type: String },
+    modeOfPayment: { type: String },
     planId: { type: String },
     name: { type: String },
     amount: { type: Number },
