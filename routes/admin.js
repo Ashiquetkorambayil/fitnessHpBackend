@@ -77,9 +77,15 @@ router.get('/getfeedetailbyuser/:id',verifyToken,planOrderController.getPlanDeta
 router.get('/getlastplansofallusers',planOrderController.getLastPlanOrderOfAllUsers)
 router.delete('/deleteplanorder/:id',verifyToken,planOrderController.deletePlanOrder)
 
+router.post('/creatependingorder',verifyToken,planOrderController.postPendingOrder)
+router.get('/getpendingorder',verifyToken,planOrderController.getPendingPlanOrders)
+router.put('/updatetoactive/:id',verifyToken,planOrderController.updateOrderToActive)
+router.put('/updatetoreject/:id',verifyToken,planOrderController.updateOrderToRejected)
 // pending orders ----------------
 
-router.post('/creatependingorder',verifyToken,pendingOrdersController.postPendingOrder)
-router.get('/getpendingorder',verifyToken,pendingOrdersController.getPendingOrder)
+// router.post('/creatependingorder',verifyToken,pendingOrdersController.postPendingOrder)
+// router.get('/getpendingorder',verifyToken,pendingOrdersController.getPendingOrder)
+// router.post('/updatependingorderstatus',verifyToken,pendingOrdersController.updatePendingOrderStatus)
+
 
 module.exports = router;

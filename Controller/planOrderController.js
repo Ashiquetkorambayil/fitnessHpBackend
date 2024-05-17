@@ -10,7 +10,7 @@ exports.postPlandOrder = asyncHandler(async(req,res)=>{
         const expiryDate = moment().add(duration, 'months').toDate();
         
         // Create plan order with expiry date
-        await plandOrderModel.create({ userId, planId, name, amount, duration, expiryDate ,modeOfPayment, userName});
+        await plandOrderModel.create({ userId, planId, name, amount, duration, expiryDate ,modeOfPayment, userName, activeStatus:'Active'});
         
         res.json({ message: 'User plan selected successfully' });
     } catch(err){
@@ -36,9 +36,6 @@ exports.getPlanOrderByUser = asyncHandler(async (req, res) => {
             } else if (daysUntilExpiry <= 5) {
                 // If the plan is within 5 days of expiry, set activeStatus to "Nearly Expire"
                 planOrder.activeStatus = "Nearly Expire";
-            } else {
-                // Otherwise, set activeStatus to "Active"
-                planOrder.activeStatus = "Active";
             }
             await planOrder.save(); // Save the updated plan order
         }
@@ -53,13 +50,14 @@ exports.getPlanOrderByUser = asyncHandler(async (req, res) => {
     }
 });
 
-
 exports.getLastPlanOrderOfUser = asyncHandler(async (req, res) => {
     const { id: userId } = req.params;
     console.log(userId, 'the id of the user');
     try {
-        // Retrieve the last plan order for the user
-        const lastPlanOrder = await plandOrderModel.findOne({ userId }).sort({ selectedAt: -1 }).limit(1);
+        // Retrieve the last plan order for the user excluding "Expired" and "Pending" statuses
+        const lastPlanOrder = await plandOrderModel.findOne({ userId, activeStatus: { $nin: ["Expired", "Pending"] } })
+            .sort({ selectedAt: -1 })
+            .limit(1);
 
         if (!lastPlanOrder) {
             // If no plan orders found, send an empty response
@@ -76,10 +74,7 @@ exports.getLastPlanOrderOfUser = asyncHandler(async (req, res) => {
         } else if (daysUntilExpiry <= 5) {
             // If the plan is within 5 days of expiry, set activeStatus to "Nearly Expire"
             lastPlanOrder.activeStatus = "Nearly Expire";
-        } else {
-            // Otherwise, set activeStatus to "Active"
-            lastPlanOrder.activeStatus = "Active";
-        }
+        } else
 
         console.log(lastPlanOrder, "the user's last plan order");
         
@@ -90,6 +85,7 @@ exports.getLastPlanOrderOfUser = asyncHandler(async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
+
 
 
 exports.getLastPlanOrderOfAllUsers = asyncHandler(async (req, res) => {
@@ -126,8 +122,6 @@ exports.getLastPlanOrderOfAllUsers = asyncHandler(async (req, res) => {
                 lastPlanOrder.activeStatus = "Expired";
             } else if (daysUntilExpiry <= 5) {
                 lastPlanOrder.activeStatus = "Nearly Expire";
-            } else {
-                lastPlanOrder.activeStatus = "Active";
             }
         });
 
@@ -165,4 +159,96 @@ exports.deletePlanOrder = asyncHandler(async(req,res)=>{
         res.status(500).send('an error occured while deleting item')
     }
 })
+
+
+
+
+exports.postPendingOrder = asyncHandler(async(req,res)=>{
+    const { userId, planId, name, amount, duration, userName, modeOfPayment } = req.body;
+    try{
+        // Calculate expiry date by adding duration months to the current date
+        const expiryDate = moment().add(duration, 'months').toDate();
+        
+        // Create plan order with expiry date and activeStatus set to "Pending"
+        await plandOrderModel.create({ 
+            userId, 
+            planId, 
+            userName,
+            name, 
+            amount, 
+            duration, 
+            expiryDate, 
+            modeOfPayment,
+            activeStatus: "Pending" // Set activeStatus to "Pending"
+        });
+        
+        res.json({ message: 'User plan selected successfully' });
+    } catch(err){
+        console.log(err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+exports.getPendingPlanOrders = asyncHandler(async(req,res)=>{
+    try{
+        // Find plan orders where activeStatus is "Pending"
+        const pendingPlanOrders = await plandOrderModel.find({ activeStatus: "Pending" });
+        
+        res.json(pendingPlanOrders);
+    } catch(err){
+        console.log(err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+
+exports.updateOrderToActive = asyncHandler(async(req,res)=>{
+    const { id } = req.params;
+    try{
+        // Find the plan order by its ID
+        const order = await plandOrderModel.findById(id);
+        
+        if (!order) {
+            res.status(404).json({ error: 'Order not found' });
+            return;
+        }
+
+        // Update the activeStatus to "Active" and show value to false
+        order.activeStatus = "Active";
+        order.show = false;
+
+        // Save the updated order
+        await order.save();
+
+        res.json({ message: 'Order updated to Active successfully' });
+    } catch(err){
+        console.log(err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+exports.updateOrderToRejected = asyncHandler(async(req,res)=>{
+    const { id } = req.params;
+    try{
+        // Find the plan order by its ID
+        const order = await plandOrderModel.findById(id);
+        
+        if (!order) {
+            res.status(404).json({ error: 'Order not found' });
+            return;
+        }
+
+        // Update the activeStatus to "Rejected" and show value to false
+        order.activeStatus = "Rejected";
+        order.show = false;
+
+        // Save the updated order
+        await order.save();
+
+        res.json({ message: 'Order updated to Rejected successfully' });
+    } catch(err){
+        console.log(err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
 

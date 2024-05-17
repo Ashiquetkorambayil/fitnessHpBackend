@@ -8,7 +8,7 @@ const pendingOrdersModel = new mongoose.Schema({
     amount: { type: Number },
     duration: { type: Number },
     requestedAt:{ type: Date, default: Date.now },
-    activeStatus: { type: String, enum: ["Pending", "Rejected"], default: "Pending" }
+     activeStatus: { type: String, enum: ["Pending", "Accepted", "Rejected"], default: "Pending" }
 });
 
 const pendingOrdersData = mongoose.model("pendingOrdersData", pendingOrdersModel)
