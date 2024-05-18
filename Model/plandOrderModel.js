@@ -10,7 +10,8 @@ const planOrderModel = new mongoose.Schema({
     selectedAt: { type: Date, default: Date.now },
     expiryDate: { type: Date },
     activeStatus: { type: String, enum: ["Active", "Expired", "Nearly Expire","Pending", "Rejected"]},
-    show:{type:Boolean, default: true}
+    show:{type:Boolean, default: true},
+    showUser:{type:Boolean, default:false}
 });
 
 const plandOrderData = mongoose.model("plandOrderData", planOrderModel)

@@ -54,10 +54,10 @@ exports.getLastPlanOrderOfUser = asyncHandler(async (req, res) => {
     const { id: userId } = req.params;
     console.log(userId, 'the id of the user');
     try {
-        // Retrieve the last plan order for the user excluding "Expired" and "Pending" statuses
-        const lastPlanOrder = await plandOrderModel.findOne({ userId, activeStatus: { $nin: ["Expired", "Pending"] } })
-            .sort({ selectedAt: -1 })
-            .limit(1);
+        // Retrieve the last plan order for the user with activeStatus "Active" or "Nearly Expire"
+        const lastPlanOrder = await plandOrderModel.findOne({userId})
+        .sort({ selectedAt: -1 }) // Sorting to get the latest plan order
+        .limit(1);
 
         if (!lastPlanOrder) {
             // If no plan orders found, send an empty response
@@ -71,11 +71,13 @@ exports.getLastPlanOrderOfUser = asyncHandler(async (req, res) => {
         if (daysUntilExpiry <= 0) {
             // If the expiry date has passed, set activeStatus to "Expired"
             lastPlanOrder.activeStatus = "Expired";
+            lastPlanOrder.showUser = false
         } else if (daysUntilExpiry <= 5) {
             // If the plan is within 5 days of expiry, set activeStatus to "Nearly Expire"
             lastPlanOrder.activeStatus = "Nearly Expire";
-        } else
-
+            lastPlanOrder.showUser = true
+        }
+        
         console.log(lastPlanOrder, "the user's last plan order");
         
         // Send the last plan order with updated activeStatus to the frontend
@@ -85,6 +87,7 @@ exports.getLastPlanOrderOfUser = asyncHandler(async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
+
 
 
 
@@ -120,8 +123,10 @@ exports.getLastPlanOrderOfAllUsers = asyncHandler(async (req, res) => {
             const daysUntilExpiry = moment(lastPlanOrder.expiryDate).diff(currentDate, 'days');
             if (daysUntilExpiry <= 0) {
                 lastPlanOrder.activeStatus = "Expired";
+                lastPlanOrder.showUser = false
             } else if (daysUntilExpiry <= 5) {
                 lastPlanOrder.activeStatus = "Nearly Expire";
+                lastPlanOrder.showUser = true
             }
         });
 
@@ -216,6 +221,7 @@ exports.updateOrderToActive = asyncHandler(async(req,res)=>{
         // Update the activeStatus to "Active" and show value to false
         order.activeStatus = "Active";
         order.show = false;
+        order.showUser = true;
 
         // Save the updated order
         await order.save();
@@ -241,6 +247,7 @@ exports.updateOrderToRejected = asyncHandler(async(req,res)=>{
         // Update the activeStatus to "Rejected" and show value to false
         order.activeStatus = "Rejected";
         order.show = false;
+        order.showUser = false;
 
         // Save the updated order
         await order.save();
@@ -252,3 +259,68 @@ exports.updateOrderToRejected = asyncHandler(async(req,res)=>{
     }
 });
 
+exports.getAllStatus = asyncHandler(async(req,res)=>{
+    try {
+        const possibleStatuses = ["Active", "Expired", "Nearly Expire", "Pending", "Rejected"];
+        res.status(200).json(possibleStatuses).send('All statuses fetched successfully');
+        console.log(possibleStatuses, 'All statuses');
+    } catch (error) {
+        console.log(error);
+        res.status(500).send('An error occurred while fetching all statuses.');
+    }
+});
+
+exports.getActiveStatus = asyncHandler(async (req, res) => {
+    try {
+        // Retrieve the last plan order for all users
+        const allUsersLastPlanOrders = await plandOrderModel.aggregate([
+            {
+                $group: {
+                    _id: "$userId",
+                    lastPlanOrder: { $last: "$$ROOT" } // Get the last plan order for each user
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    userId: "$_id",
+                    lastPlanOrder: 1
+                }
+            }
+        ]);
+
+        if (!allUsersLastPlanOrders || allUsersLastPlanOrders.length === 0) {
+            // If no plan orders found for any user, send an empty response
+            res.json([]);
+            return;
+        }
+
+        // Iterate over each user's last plan order to calculate activeStatus
+        const currentDate = moment();
+        allUsersLastPlanOrders.forEach(userOrder => {
+            const lastPlanOrder = userOrder.lastPlanOrder;
+            const daysUntilExpiry = moment(lastPlanOrder.expiryDate).diff(currentDate, 'days');
+            if (daysUntilExpiry <= 0) {
+                lastPlanOrder.activeStatus = "Expired";
+                lastPlanOrder.showUser = false;
+            } else if (daysUntilExpiry <= 5) {
+                lastPlanOrder.activeStatus = "Nearly Expire";
+                lastPlanOrder.showUser = true;
+            } else {
+                lastPlanOrder.activeStatus = "Active"; // Set activeStatus to "Active"
+                lastPlanOrder.showUser = true; // Assuming to show the user if it's active
+            }
+        });
+
+        console.log(allUsersLastPlanOrders, "last plan orders of all users");
+
+        // Filter to get only entries with activeStatus equal to "Active"
+        const activeOrders = allUsersLastPlanOrders.filter(userOrder => userOrder.lastPlanOrder.activeStatus === "Active");
+
+        // Send the last plan orders with updated activeStatus to the frontend
+        res.json(activeOrders);
+    } catch (error) {
+        console.error('Error fetching last plan orders of all users:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});

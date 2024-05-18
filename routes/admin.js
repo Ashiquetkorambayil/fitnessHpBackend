@@ -64,6 +64,7 @@ router.put('/putenrollment/:id',enrollmetnController.putEnrollment)
 router.post('/postuser',upload.single('image'),userController.postUser)
 router.post('/postusersignin',userController.userPostSignIn)
 router.get('/getusers',verifyToken,userController.getUser)
+// router.get('/getsearchusers',verifyToken,userController.getSearchUsers)
 router.get('/getuserbyid/:id',userController.getUserById)
 router.delete('/deleteuser/:id',userController.deleteUser)
 router.put('/edituser/:id',upload.single('image'),userController.editUser)
@@ -81,6 +82,8 @@ router.post('/creatependingorder',verifyToken,planOrderController.postPendingOrd
 router.get('/getpendingorder',verifyToken,planOrderController.getPendingPlanOrders)
 router.put('/updatetoactive/:id',verifyToken,planOrderController.updateOrderToActive)
 router.put('/updatetoreject/:id',verifyToken,planOrderController.updateOrderToRejected)
+router.get('/getallstatus',verifyToken,planOrderController.getAllStatus)
+router.get('/getactiveusers',verifyToken,planOrderController.getActiveStatus)
 // pending orders ----------------
 
 // router.post('/creatependingorder',verifyToken,pendingOrdersController.postPendingOrder)
