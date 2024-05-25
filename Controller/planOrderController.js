@@ -1,6 +1,15 @@
 const asyncHandler = require('express-async-handler');
 const plandOrderModel = require('../Model/plandOrderModel');
 const moment = require('moment'); // Import moment library for date manipulation
+const userModel = require('../Model/userModel')
+
+// phonepay for testing purpose------------
+const PHONE_PAY_HOST_URL = 'https://api-preprod.phonepe.com/apis/pg-sandbox';
+const MERCHANT_ID ='PGTESTPAYUAT';
+const SALT_INDEX = 1;
+const SALT_KEY = '099eb0cd-02cf-4e2a-8aca-3e6c6aff0399'
+
+
 
 exports.postPlandOrder = asyncHandler(async(req,res)=>{
     const { userId, planId, name, amount, duration, userName, modeOfPayment } = req.body;
@@ -10,8 +19,11 @@ exports.postPlandOrder = asyncHandler(async(req,res)=>{
         const expiryDate = moment().add(duration, 'months').toDate();
         
         // Create plan order with expiry date
-        await plandOrderModel.create({ userId, planId, name, amount, duration, expiryDate ,modeOfPayment, userName, activeStatus:'Active'});
-        
+        await plandOrderModel.create({ userId, planId, name, amount, duration, expiryDate ,modeOfPayment, userName, activeStatus:'Active',showUser:true});
+        const user = await userModel.findById(userId);
+        user.authenticate = true
+        await user.save();
+
         res.json({ message: 'User plan selected successfully' });
     } catch(err){
         console.log(err);
@@ -209,9 +221,12 @@ exports.getPendingPlanOrders = asyncHandler(async(req,res)=>{
 
 exports.updateOrderToActive = asyncHandler(async(req,res)=>{
     const { id } = req.params;
+    const {userId} = req.body;
+    console.log(userId, 'the user Id ')
     try{
         // Find the plan order by its ID
         const order = await plandOrderModel.findById(id);
+        const user = await userModel.findById(userId)
         
         if (!order) {
             res.status(404).json({ error: 'Order not found' });
@@ -222,9 +237,11 @@ exports.updateOrderToActive = asyncHandler(async(req,res)=>{
         order.activeStatus = "Active";
         order.show = false;
         order.showUser = true;
+        user.authenticate = true
 
         // Save the updated order
         await order.save();
+        await user.save();
 
         res.json({ message: 'Order updated to Active successfully' });
     } catch(err){
@@ -235,9 +252,11 @@ exports.updateOrderToActive = asyncHandler(async(req,res)=>{
 
 exports.updateOrderToRejected = asyncHandler(async(req,res)=>{
     const { id } = req.params;
+    const {userId} = req.body;
     try{
         // Find the plan order by its ID
         const order = await plandOrderModel.findById(id);
+        const user = await userModel.findById(userId)
         
         if (!order) {
             res.status(404).json({ error: 'Order not found' });
@@ -248,9 +267,11 @@ exports.updateOrderToRejected = asyncHandler(async(req,res)=>{
         order.activeStatus = "Rejected";
         order.show = false;
         order.showUser = false;
+        user.authenticate = false
 
         // Save the updated order
         await order.save();
+        await user.save();
 
         res.json({ message: 'Order updated to Rejected successfully' });
     } catch(err){

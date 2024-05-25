@@ -11,7 +11,9 @@ const userModel = new mongoose.Schema({
     blood:{type:String, required:true},
     email:{type:String, required:true},
     plan:{type:String},
-    token:{type: String}
+    token:{type: String},
+    revealed:{type:Boolean, default:false},
+    authenticate:{type:Boolean, default:false}
 })
 
 userModel.pre('save', async function (next) {

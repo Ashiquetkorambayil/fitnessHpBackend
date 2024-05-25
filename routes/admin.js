@@ -39,6 +39,7 @@ const planOrderController = require('../Controller/planOrderController')
 const pendingOrdersController = require('../Controller/pendingOrderController')
 
 
+
 // admin -----------------------------
 
 // router.post('/postadmin',adminController.postadmin);
@@ -48,7 +49,7 @@ router.get('/getadmin',verifyToken,adminController.getAdmin);
 // plans------
 
 router.post('/postPlan',verifyToken,planController.postPlan)
-router.get('/getplans',verifyToken,planController.getPlans)
+router.get('/getplans',planController.getPlans)
 router.get('/getplansbyid/:id',verifyToken,planController.getPlansById)
 router.put('/putplans/:id',verifyToken,planController.putPlans)
 router.delete('/deleteplan/:id',verifyToken,planController.deletePlansById)
@@ -62,13 +63,16 @@ router.put('/putenrollment/:id',enrollmetnController.putEnrollment)
 
 // users-----------------
 router.post('/postuser',upload.single('image'),userController.postUser)
+router.post('/createuser',upload.single('image'),userController.createUser)
 router.post('/postusersignin',userController.userPostSignIn)
 router.get('/getusers',verifyToken,userController.getUser)
 // router.get('/getsearchusers',verifyToken,userController.getSearchUsers)
 router.get('/getuserbyid/:id',userController.getUserById)
 router.delete('/deleteuser/:id',userController.deleteUser)
 router.put('/edituser/:id',upload.single('image'),userController.editUser)
-
+router.put('/revealuser/:id',verifyToken,userController.revealUser)
+router.get('/getrevealedusers',verifyToken,userController.getrevealedUser)
+router.put('/unreveal/:id',verifyToken,userController.unrevealUser)
 // plan orders ----------------
 
 router.post('/createplanorder',verifyToken,planOrderController.postPlandOrder)
